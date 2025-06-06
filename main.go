@@ -20,7 +20,8 @@ import (
 // @version 1.0
 // @description API for Game Library system
 // @host game-lib.example.com
-// @BasePath
+// @BasePath /
+// @schemes https
 
 func main() {
 	config.ConnectDB()

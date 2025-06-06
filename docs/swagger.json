@@ -1,4 +1,7 @@
 {
+    "schemes": [
+        "https"
+    ],
     "swagger": "2.0",
     "info": {
         "description": "API for Game Library system",
@@ -7,6 +10,7 @@
         "version": "1.0"
     },
     "host": "game-lib.example.com",
+    "basePath": "/",
     "paths": {
         "/api/my-purchases": {
             "get": {

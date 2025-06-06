@@ -618,8 +618,8 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "game-lib.example.com",
-	BasePath:         "",
-	Schemes:          []string{},
+	BasePath:         "/",
+	Schemes:          []string{"https"},
 	Title:            "Game Library API",
 	Description:      "API for Game Library system",
 	InfoInstanceName: "swagger",
