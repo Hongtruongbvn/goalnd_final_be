@@ -227,15 +227,19 @@ func FetchAndSaveGames(c *gin.Context) {
 // @Failure 500 {object} map[string]string
 // @Router /games/fetch-games100 [get]
 func FetchAndSaveGames100(c *gin.Context) {
-	totalPages := 3 // 250 pages * 40 games = 10,000 games
-	pageSize := 40
+	const totalGames = 100
+	const pageSize = 40
+
 	importedCount := 0
+	fetchedCount := 0
+
+	totalPages := (totalGames + pageSize - 1) / pageSize // = 3 pages
 
 	for page := 1; page <= totalPages; page++ {
 		url := fmt.Sprintf("https://api.rawg.io/api/games?key=%s&page_size=%d&page=%d", RAWG_API_KEY, pageSize, page)
 		resp, err := http.Get(url)
 		if err != nil {
-			c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to fetch from RAWG at page %d", page)})
+			c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to fetch from RAWG at page %d: %v", page, err)})
 			return
 		}
 		defer resp.Body.Close()
@@ -253,43 +257,69 @@ func FetchAndSaveGames100(c *gin.Context) {
 			return
 		}
 
-		results, ok := result["results"].([]interface{})
+		resultsRaw, ok := result["results"].([]interface{})
 		if !ok {
-			c.JSON(500, gin.H{"error": "Invalid data format"})
+			c.JSON(500, gin.H{"error": "Invalid data format in results"})
 			return
 		}
 
-		for _, item := range results {
-			gameMap := item.(map[string]interface{})
+		for _, item := range resultsRaw {
+			if importedCount >= totalGames {
+				break
+			}
 
-			rawgID := int(gameMap["id"].(float64))
-			name := gameMap["name"].(string)
+			gameMap, ok := item.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			idVal, ok := gameMap["id"].(float64)
+			if !ok {
+				continue
+			}
+			rawgID := int(idVal)
+
+			nameVal, ok := gameMap["name"].(string)
+			if !ok {
+				continue
+			}
+			name := nameVal
 
 			image := ""
-			if gameMap["background_image"] != nil {
-				image = gameMap["background_image"].(string)
+			if imgVal, ok := gameMap["background_image"].(string); ok {
+				image = imgVal
 			}
 
 			rating := 0.0
-			if gameMap["rating"] != nil {
-				rating = gameMap["rating"].(float64)
+			if ratingVal, ok := gameMap["rating"].(float64); ok {
+				rating = ratingVal
 			}
 
-			genresRaw := gameMap["genres"].([]interface{})
-			var genres []string
-			for _, g := range genresRaw {
-				genres = append(genres, g.(map[string]interface{})["name"].(string))
+			genres := []string{}
+			if genresRaw, ok := gameMap["genres"].([]interface{}); ok {
+				for _, g := range genresRaw {
+					if gMap, ok := g.(map[string]interface{}); ok {
+						if gName, ok := gMap["name"].(string); ok {
+							genres = append(genres, gName)
+						}
+					}
+				}
 			}
 
-			platformsRaw := gameMap["platforms"].([]interface{})
-			var platforms []string
-			for _, p := range platformsRaw {
-				pMap := p.(map[string]interface{})
-				platform := pMap["platform"].(map[string]interface{})
-				platforms = append(platforms, platform["name"].(string))
+			platforms := []string{}
+			if platformsRaw, ok := gameMap["platforms"].([]interface{}); ok {
+				for _, p := range platformsRaw {
+					if pMap, ok := p.(map[string]interface{}); ok {
+						if platform, ok := pMap["platform"].(map[string]interface{}); ok {
+							if platformName, ok := platform["name"].(string); ok {
+								platforms = append(platforms, platformName)
+							}
+						}
+					}
+				}
 			}
 
-			description := "No description available"
+			description := "No description available" // API chưa lấy mô tả chi tiết, nếu cần có thể fetch thêm
 
 			price := 100 + rand.Intn(900)
 
@@ -318,10 +348,15 @@ func FetchAndSaveGames100(c *gin.Context) {
 				}
 				importedCount++
 			}
+
+			fetchedCount++
+		}
+		if importedCount >= totalGames {
+			break
 		}
 	}
 
-	c.JSON(200, gin.H{"message": fmt.Sprintf("%d games imported", importedCount)})
+	c.JSON(200, gin.H{"message": fmt.Sprintf("%d games imported out of %d fetched", importedCount, fetchedCount)})
 }
 
 // FetchGamesByPage godoc
