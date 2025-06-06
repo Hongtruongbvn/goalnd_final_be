@@ -62,7 +62,7 @@ definitions:
         description: user, admin
         type: string
     type: object
-host: localhost:8080
+host: game-lib.example.com
 info:
   contact: {}
   description: API for Game Library system
