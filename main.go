@@ -19,7 +19,7 @@ import (
 // @title Game Library API
 // @version 1.0
 // @description API for Game Library system
-// @host localhost:8080
+// @host game-lib.example.com
 // @BasePath
 
 func main() {
@@ -30,7 +30,7 @@ func main() {
 
 	// Configure CORS middleware properly at the beginning
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"}, // Specify your frontend origin
+		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept"},
 		ExposeHeaders:    []string{"Content-Length"},
