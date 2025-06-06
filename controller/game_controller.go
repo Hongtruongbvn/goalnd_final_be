@@ -182,6 +182,103 @@ func FetchAndSaveGames(c *gin.Context) {
 
 	c.JSON(200, gin.H{"message": fmt.Sprintf("%d games imported", importedCount)})
 }
+func FetchAndSaveGames100(c *gin.Context) {
+	totalPages := 3 // 250 pages * 40 games = 10,000 games
+	pageSize := 40
+	importedCount := 0
+
+	for page := 1; page <= totalPages; page++ {
+		url := fmt.Sprintf("https://api.rawg.io/api/games?key=%s&page_size=%d&page=%d", RAWG_API_KEY, pageSize, page)
+		resp, err := http.Get(url)
+		if err != nil {
+			c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to fetch from RAWG at page %d", page)})
+			return
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			c.JSON(500, gin.H{"error": "Failed to read response body"})
+			return
+		}
+
+		var result map[string]interface{}
+		err = json.Unmarshal(body, &result)
+		if err != nil {
+			c.JSON(500, gin.H{"error": "Failed to parse JSON"})
+			return
+		}
+
+		results, ok := result["results"].([]interface{})
+		if !ok {
+			c.JSON(500, gin.H{"error": "Invalid data format"})
+			return
+		}
+
+		for _, item := range results {
+			gameMap := item.(map[string]interface{})
+
+			rawgID := int(gameMap["id"].(float64))
+			name := gameMap["name"].(string)
+
+			image := ""
+			if gameMap["background_image"] != nil {
+				image = gameMap["background_image"].(string)
+			}
+
+			rating := 0.0
+			if gameMap["rating"] != nil {
+				rating = gameMap["rating"].(float64)
+			}
+
+			genresRaw := gameMap["genres"].([]interface{})
+			var genres []string
+			for _, g := range genresRaw {
+				genres = append(genres, g.(map[string]interface{})["name"].(string))
+			}
+
+			platformsRaw := gameMap["platforms"].([]interface{})
+			var platforms []string
+			for _, p := range platformsRaw {
+				pMap := p.(map[string]interface{})
+				platform := pMap["platform"].(map[string]interface{})
+				platforms = append(platforms, platform["name"].(string))
+			}
+
+			description := "No description available"
+
+			price := 100 + rand.Intn(900)
+
+			filter := bson.M{"rawg_id": rawgID}
+			count, err := config.DB.Collection("games").CountDocuments(context.TODO(), filter)
+			if err != nil {
+				c.JSON(500, gin.H{"error": "Database error"})
+				return
+			}
+			if count == 0 {
+				game := models.Game{
+					ID:          primitive.NewObjectID(),
+					RawgID:      rawgID,
+					Name:        name,
+					Description: description,
+					ImageURL:    image,
+					Genres:      genres,
+					Platforms:   platforms,
+					Rating:      rating,
+					Price:       price,
+				}
+				_, err := config.DB.Collection("games").InsertOne(context.TODO(), game)
+				if err != nil {
+					c.JSON(500, gin.H{"error": "Failed to insert into DB"})
+					return
+				}
+				importedCount++
+			}
+		}
+	}
+
+	c.JSON(200, gin.H{"message": fmt.Sprintf("%d games imported", importedCount)})
+}
 func FetchGamesByPage(c *gin.Context) {
 	pageStr := c.Query("page")
 	if pageStr == "" {

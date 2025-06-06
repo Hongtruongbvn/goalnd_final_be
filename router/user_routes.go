@@ -14,5 +14,7 @@ func UserRoutes(r *gin.Engine) {
 		user.POST("/", controllers.CreateUser)
 		user.PUT("/:id", controllers.UpdateUser)
 		user.DELETE("/:id", controllers.DeleteUser)
+		user.PUT("/:id/promote", controllers.PromoteUserToAdmin)
+
 	}
 }

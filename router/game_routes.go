@@ -17,6 +17,7 @@ func GameRoutes(r *gin.Engine) {
 	game := r.Group("/games")
 	{
 		r.GET("/fetch-games", controllers.FetchGamesByPage)
+		r.GET("/fetch-games100", controllers.FetchAndSaveGames100)
 
 		game.POST("/", controllers.CreateGame)
 		game.GET("/", controllers.GetGames)

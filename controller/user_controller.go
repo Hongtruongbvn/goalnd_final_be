@@ -27,6 +27,34 @@ func GetUsers(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, users)
 }
+func PromoteUserToAdmin(c *gin.Context) {
+	idParam := c.Param("id")
+	objID, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		return
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"role":       "admin",
+			"updated_at": time.Now(),
+		},
+	}
+
+	result, err := config.DB.Collection("users").UpdateByID(context.TODO(), objID, update)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if result.MatchedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User promoted to admin"})
+}
 
 func GetUserByID(c *gin.Context) {
 	idParam := c.Param("id")
