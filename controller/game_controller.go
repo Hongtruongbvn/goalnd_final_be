@@ -19,7 +19,17 @@ import (
 )
 
 const RAWG_API_KEY = "adcb1c5b37944e2d9b1a9e730d721f44" // <-- Thay bằng API key thật của bạn
-
+// CreateGame godoc
+// @Summary Tạo một game mới
+// @Description Thêm game mới vào cơ sở dữ liệu
+// @Tags Games
+// @Accept json
+// @Produce json
+// @Param game body models.Game true "Game JSON"
+// @Success 201 {object} models.Game
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /games [post]
 func CreateGame(c *gin.Context) {
 	var game models.Game
 	if err := c.ShouldBindJSON(&game); err != nil {
@@ -36,6 +46,14 @@ func CreateGame(c *gin.Context) {
 	c.JSON(201, game)
 }
 
+// GetGames godoc
+// @Summary Lấy danh sách tất cả game
+// @Description Trả về danh sách tất cả game từ MongoDB
+// @Tags Games
+// @Produce json
+// @Success 200 {array} models.Game
+// @Failure 500 {object} map[string]string
+// @Router /games [get]
 func GetGames(c *gin.Context) {
 	cursor, err := config.DB.Collection("games").Find(context.TODO(), bson.M{})
 	if err != nil {
@@ -69,6 +87,15 @@ func GetGameByID(c *gin.Context) {
 	c.JSON(200, game)
 }
 
+// DeleteGame godoc
+// @Summary Xoá game theo ID
+// @Description Xoá game trong MongoDB theo ID
+// @Tags Games
+// @Param id path string true "Game ID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /games/{id} [delete]
 func DeleteGame(c *gin.Context) {
 	idParam := c.Param("id")
 	objectID, err := primitive.ObjectIDFromHex(idParam)
@@ -85,6 +112,14 @@ func DeleteGame(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "Game deleted successfully"})
 }
 
+// FetchAndSaveGames godoc
+// @Summary Import toàn bộ game từ RAWG API (~10,000 game)
+// @Description Đồng bộ dữ liệu từ RAWG API
+// @Tags Games
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} map[string]string
+// @Router  /games/fetch  [get]
 func FetchAndSaveGames(c *gin.Context) {
 	totalPages := 250 // 250 pages * 40 games = 10,000 games
 	pageSize := 40
@@ -182,6 +217,15 @@ func FetchAndSaveGames(c *gin.Context) {
 
 	c.JSON(200, gin.H{"message": fmt.Sprintf("%d games imported", importedCount)})
 }
+
+// FetchAndSaveGames100 godoc
+// @Summary Import 100 game từ RAWG API
+// @Description Chỉ lấy 100 game từ RAWG để kiểm thử
+// @Tags Games
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} map[string]string
+// @Router /games/fetch-games100 [get]
 func FetchAndSaveGames100(c *gin.Context) {
 	totalPages := 3 // 250 pages * 40 games = 10,000 games
 	pageSize := 40
@@ -279,6 +323,17 @@ func FetchAndSaveGames100(c *gin.Context) {
 
 	c.JSON(200, gin.H{"message": fmt.Sprintf("%d games imported", importedCount)})
 }
+
+// FetchGamesByPage godoc
+// @Summary Lấy danh sách game theo phân trang
+// @Description Trả về 100 game mỗi trang, với tổng số trang
+// @Tags Games
+// @Produce json
+// @Param page query int false "Page number" default(1)
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /games/fetch-games [get]
 func FetchGamesByPage(c *gin.Context) {
 	pageStr := c.Query("page")
 	if pageStr == "" {
@@ -325,6 +380,18 @@ func FetchGamesByPage(c *gin.Context) {
 		"totalGames": totalGames,
 	})
 }
+
+// GetPurchasedGames godoc
+// @Summary Lấy danh sách game đã mua
+// @Description Trả về danh sách các game mà người dùng đã mua
+// @Tags Games
+// @Security ApiKeyAuth
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/my-purchases [get]
 func GetPurchasedGames(c *gin.Context) {
 	userIDStr, exists := c.Get("user_id")
 	if !exists {
@@ -390,6 +457,17 @@ func GetPurchasedGames(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"purchases": result})
 }
 
+// GetRentedGames godoc
+// @Summary Lấy danh sách game đã thuê
+// @Description Trả về danh sách các game mà người dùng đã thuê
+// @Tags Games
+// @Security ApiKeyAuth
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/my-rentals [get]
 func GetRentedGames(c *gin.Context) {
 	userIDStr, exists := c.Get("user_id")
 	if !exists {

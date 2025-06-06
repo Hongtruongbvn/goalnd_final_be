@@ -12,6 +12,17 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// RechargeCoin godoc
+// @Summary Recharge coin balance
+// @Tags Wallet
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param amount body map[string]int true "Recharge amount"
+// @Success 200 {object} gin.H
+// @Failure 400,500 {object} gin.H
+// @Router /recharge [post]
+
 func RechargeCoin(c *gin.Context) {
 	userIDStr, _ := c.Get("user_id")
 	userID, err := primitive.ObjectIDFromHex(userIDStr.(string))
@@ -55,6 +66,16 @@ func RechargeCoin(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Recharge successful"})
 }
 
+// GetRechargeHistory godoc
+// @Summary Lấy lịch sử nạp tiền của người dùng
+// @Description Truy vấn lịch sử nạp tiền dựa trên user_id trong token
+// @Tags Recharge
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} map[string][]models.Recharge "Danh sách các lịch sử nạp tiền"
+// @Failure 400 {object} map[string]string "ID người dùng không hợp lệ"
+// @Failure 500 {object} map[string]string "Lỗi server khi truy vấn hoặc decode dữ liệu"
+// @Router /recharge-history  [get]
 func GetRechargeHistory(c *gin.Context) {
 	userIDStr, _ := c.Get("user_id")
 	userID, err := primitive.ObjectIDFromHex(userIDStr.(string))

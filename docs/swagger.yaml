@@ -1,0 +1,396 @@
+definitions:
+  controllers.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  controllers.MessageResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  models.Game:
+    properties:
+      description:
+        type: string
+      genres:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      image_url:
+        type: string
+      name:
+        type: string
+      platforms:
+        items:
+          type: string
+        type: array
+      price:
+        type: integer
+      rating:
+        type: number
+      rawg_id:
+        type: integer
+    type: object
+  models.Recharge:
+    properties:
+      amount:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: string
+      status:
+        description: pending, success, failed
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.User:
+    properties:
+      coin_balance:
+        type: integer
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      role:
+        description: user, admin
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for Game Library system
+  title: Game Library API
+  version: "1.0"
+paths:
+  /api/my-purchases:
+    get:
+      description: Trả về danh sách các game mà người dùng đã mua
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Lấy danh sách game đã mua
+      tags:
+      - Games
+  /api/my-rentals:
+    get:
+      description: Trả về danh sách các game mà người dùng đã thuê
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Lấy danh sách game đã thuê
+      tags:
+      - Games
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email and Password
+        in: body
+        name: credentials
+        required: true
+        schema:
+          additionalProperties:
+            type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      summary: User login
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User registration info
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - Auth
+  /games:
+    get:
+      description: Trả về danh sách tất cả game từ MongoDB
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Game'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lấy danh sách tất cả game
+      tags:
+      - Games
+    post:
+      consumes:
+      - application/json
+      description: Thêm game mới vào cơ sở dữ liệu
+      parameters:
+      - description: Game JSON
+        in: body
+        name: game
+        required: true
+        schema:
+          $ref: '#/definitions/models.Game'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Game'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Tạo một game mới
+      tags:
+      - Games
+  /games/{id}:
+    delete:
+      description: Xoá game trong MongoDB theo ID
+      parameters:
+      - description: Game ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Xoá game theo ID
+      tags:
+      - Games
+  /games/fetch:
+    get:
+      description: Đồng bộ dữ liệu từ RAWG API
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Import toàn bộ game từ RAWG API (~10,000 game)
+      tags:
+      - Games
+  /games/fetch-games:
+    get:
+      description: Trả về 100 game mỗi trang, với tổng số trang
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Lấy danh sách game theo phân trang
+      tags:
+      - Games
+  /games/fetch-games100:
+    get:
+      description: Chỉ lấy 100 game từ RAWG để kiểm thử
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Import 100 game từ RAWG API
+      tags:
+      - Games
+  /recharge-history:
+    get:
+      description: Truy vấn lịch sử nạp tiền dựa trên user_id trong token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Danh sách các lịch sử nạp tiền
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/models.Recharge'
+              type: array
+            type: object
+        "400":
+          description: ID người dùng không hợp lệ
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Lỗi server khi truy vấn hoặc decode dữ liệu
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Lấy lịch sử nạp tiền của người dùng
+      tags:
+      - Recharge
+  /users:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.MessageResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/controllers.ErrorResponse'
+      summary: Get all users
+      tags:
+      - Users
+swagger: "2.0"

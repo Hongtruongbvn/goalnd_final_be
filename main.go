@@ -3,6 +3,7 @@ package main
 import (
 	"go-mvc-demo/config"
 	controllers "go-mvc-demo/controller"
+	_ "go-mvc-demo/docs"
 	"go-mvc-demo/middleware"
 	routes "go-mvc-demo/router"
 	"math/rand"
@@ -11,7 +12,15 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
+
+// @title Game Library API
+// @version 1.0
+// @description API for Game Library system
+// @host localhost:8080
+// @BasePath
 
 func main() {
 	config.ConnectDB()
@@ -21,7 +30,7 @@ func main() {
 
 	// Configure CORS middleware properly at the beginning
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"}, // Specify your frontend origin
+		AllowOrigins:     []string{"*"}, // Specify your frontend origin
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -29,14 +38,12 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// Auth routes
 	auth := r.Group("/auth")
 	{
 		auth.POST("/register", controllers.Register)
 		auth.POST("/login", controllers.Login)
 	}
 
-	// Protected routes
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
 	{
@@ -51,7 +58,7 @@ func main() {
 	routes.UserRoutes(r)
 	routes.GameRoutes(r)
 	routes.TransactionRoutes(r)
-
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

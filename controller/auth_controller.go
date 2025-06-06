@@ -16,7 +16,23 @@ import (
 
 var jwtSecret = []byte("SECRET_KEY")
 
-// Đăng ký
+type MessageResponse struct {
+	Message string `json:"message"`
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+// Register godoc
+// @Summary Register a new user
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param user body models.User true "User registration info"
+// @Success 200 {object} MessageResponse
+// @Failure 400 {object} ErrorResponse
+// @Router /auth/register [post]
 func Register(c *gin.Context) {
 	var input struct {
 		Name     string `json:"name"`
@@ -48,7 +64,15 @@ func Register(c *gin.Context) {
 	c.JSON(201, gin.H{"message": "User created"})
 }
 
-// Đăng nhập
+// Login godoc
+// @Summary User login
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param credentials body map[string]string true "Email and Password"
+// @Success 200 {object} MessageResponse
+// @Failure 400 {object} ErrorResponse
+// @Router /auth/login [post]
 func Login(c *gin.Context) {
 	var input struct {
 		Email    string `json:"email"`

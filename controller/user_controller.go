@@ -12,6 +12,13 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// GetUsers godoc
+// @Summary Get all users
+// @Tags Users
+// @Produce json
+// @Success 200 {object} MessageResponse
+// @Failure 401 {object} ErrorResponse
+// @Router /users [get]
 func GetUsers(c *gin.Context) {
 	var users []models.User
 	cursor, err := config.DB.Collection("users").Find(context.TODO(), bson.M{})
@@ -27,6 +34,16 @@ func GetUsers(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, users)
 }
+
+// PromoteUserToAdmin godoc
+// @Summary Promote a user to admin
+// @Tags Users
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 200 {object} MessageResponse
+// @Failure 401 {object} ErrorResponse
+// @Router /users/{id}/promote [patch]
+
 func PromoteUserToAdmin(c *gin.Context) {
 	idParam := c.Param("id")
 	objID, err := primitive.ObjectIDFromHex(idParam)

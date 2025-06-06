@@ -12,6 +12,16 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// BuyGame godoc
+// @Summary Buy a game
+// @Tags Games
+// @Security BearerAuth
+// @Produce json
+// @Param id path string true "Game ID"
+// @Success 200 {object} gin.H
+// @Failure 400,404,500 {object} gin.H
+// @Router /buy/:id [post]
+
 func BuyGame(c *gin.Context) {
 	userID := c.MustGet("user_id").(string)
 	gameID := c.Param("id")
@@ -189,6 +199,17 @@ func GetUserGames(c *gin.Context) {
 
 	c.JSON(200, gin.H{"games": response})
 }
+
+// RentGame godoc
+// @Summary Rent a game for 3 days
+// @Tags Games
+// @Security BearerAuth
+// @Produce json
+// @Param id path string true "Game ID"
+// @Success 200 {object} gin.H
+// @Failure 400,404,500 {object} gin.H
+// @Router /rent/:id  [post]
+
 func RentGame(c *gin.Context) {
 	userID := c.MustGet("user_id").(string)
 	gameID := c.Param("id")
@@ -234,6 +255,15 @@ func RentGame(c *gin.Context) {
 
 	c.JSON(200, gin.H{"message": "Game rented for 3 days"})
 }
+
+// CheckActiveRental godoc
+// @Summary Check if a game is currently rented
+// @Tags Games
+// @Security BearerAuth
+// @Produce json
+// @Param id path string true "Game ID"
+// @Success 200 {object} map[string]interface{}
+// @Router /rental/check/:id  [get]
 
 func CheckActiveRental(c *gin.Context) {
 	userID := c.MustGet("user_id").(string)
